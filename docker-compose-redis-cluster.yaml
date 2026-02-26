@@ -1,0 +1,178 @@
+version: '3.8'
+
+services:
+  redis1:
+    image: redis:7.2
+    container_name: redis-1
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis-config/redis-node-1.conf:/usr/local/etc/redis/redis.conf
+      - redis1-data:/data
+    ports:
+      - "6379:6379"
+      - "16379:16379"
+    networks:
+      redis-net:
+        ipv4_address: 172.28.0.11
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Similar configuration for redis2 through redis6 with different ports and IPs
+  redis2:
+    image: redis:7.2
+    container_name: redis-2
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis-config/redis-node-2.conf:/usr/local/etc/redis/redis.conf
+      - redis2-data:/data
+    ports:
+      - "6380:6379"
+      - "16380:16379"
+    networks:
+      redis-net:
+        ipv4_address: 172.28.0.12
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Repeat for redis3 through redis6 with appropriate IP addresses and ports
+
+  redis3:
+    image: redis:7.2
+    container_name: redis-3
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis-config/redis-node-3.conf:/usr/local/etc/redis/redis.conf
+      - redis2-data:/data
+    ports:
+      - "6381:6379"
+      - "16381:16379"
+    networks:
+      redis-net:
+        ipv4_address: 172.28.0.13
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis4:
+    image: redis:7.2
+    container_name: redis-4
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis-config/redis-node-4.conf:/usr/local/etc/redis/redis.conf
+      - redis2-data:/data
+    ports:
+      - "6382:6379"
+      - "16382:16379"
+    networks:
+      redis-net:
+        ipv4_address: 172.28.0.14
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis5:
+    image: redis:7.2
+    container_name: redis-5
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis-config/redis-node-5.conf:/usr/local/etc/redis/redis.conf
+      - redis2-data:/data
+    ports:
+      - "6383:6379"
+      - "16383:16379"
+    networks:
+      redis-net:
+        ipv4_address: 172.28.0.15
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis6:
+    image: redis:7.2
+    container_name: redis-6
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis-config/redis-node-6.conf:/usr/local/etc/redis/redis.conf
+      - redis2-data:/data
+    ports:
+      - "6384:6379"
+      - "16384:16379"
+    networks:
+      redis-net:
+        ipv4_address: 172.28.0.16
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Add a Redis Cluster management and monitoring service
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-commander
+    restart: always
+    environment:
+      - REDIS_HOSTS=redis1:redis-1:6379,redis2:redis-2:6379,redis3:redis-3:6379,redis4:redis-4:6379,redis5:redis-5:6379,redis6:redis-6:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - redis-net
+    depends_on:
+      - redis1
+      - redis2
+      - redis3
+      - redis4
+      - redis5
+      - redis6
+
+networks:
+  redis-net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  redis1-data:
+  redis2-data:
+  redis3-data:
+  redis4-data:
+  redis5-data:
+  redis6-data:

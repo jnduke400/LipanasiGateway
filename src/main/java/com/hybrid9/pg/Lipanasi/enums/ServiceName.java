@@ -1,0 +1,17 @@
+package com.hybrid9.pg.Lipanasi.enums;
+
+
+public enum ServiceName {
+    MIXX_PAYMENT,
+    MPESA_PAYMENT,
+    AIRTEL_PAYMENT,
+    HALOTEL_PAYMENT,
+    AM_TQS_PAYMENT,
+    GEPG_PAYMENT,
+    BANK_PAYMENT,
+    VAT_PAYMENT,
+    TRA_TAX_PAYMENT,
+    VENDOR_SETTLEMENT,
+    PARTNER_DATA_QUERY,
+    SOFTNET_VFD,
+}

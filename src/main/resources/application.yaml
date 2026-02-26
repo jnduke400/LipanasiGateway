@@ -1,0 +1,334 @@
+access-token:
+  private: ${ACCESS_TOKEN_PRIVATE_KEY_PATH}
+  public: ${ACCESS_TOKEN_PUBLIC_KEY_PATH}
+refresh-token:
+  private: ${REFRESH_TOKEN_PRIVATE_KEY_PATH}
+  public: ${REFRESH_TOKEN_PUBLIC_KEY_PATH}
+spring:
+  profiles:
+    active: dev
+  main:
+    allow-bean-definition-overriding: true
+  #  jpa:
+  #    show-sql: false
+  #    hibernate:
+  #      ddl-auto: update #${SPRING_JPA_HIBERNATE_DDL_AUTO}
+  ##      #properties:
+  ###        hibernate:
+  ###          dialect: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT}
+  ##
+  ##      naming:
+  ##        physical-strategy: com.gtl.pg.scoop.configs.MultiTableDynamicNamingStrategy
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Africa/Dar_es_Salaam
+  application:
+    name: Lipanasi
+  datasource:
+    primary:
+      url: jdbc:mysql://mysql-primary:3306/lipanasi?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true&serverTimezone=Africa/Dar_es_Salaam
+      jdbc-url: jdbc:mysql://mysql-primary:3306/lipanasi?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true&serverTimezone=Africa/Dar_es_Salaam
+      username: ${SPRING_DATASOURCE_USERNAME}
+      password: ${SPRING_DATASOURCE_PASSWORD}
+      driver: com.mysql.cj.jdbc.Driver
+      hikari:
+        read-only: false
+        hikari:
+          connection-timeout: 20000 # 20 seconds
+          maximum-pool-size: 17
+          minimum-idle: 8
+          pool-name: payscoop-primary-pool
+          idle-timeout: 300000 # 5 minutes
+          max-lifetime: 1200000 # 20 minutes
+          register-mbeans: true
+          auto-commit: false
+
+    #          maximum-pool-size: 7
+    #          minimum-idle: 3
+    #          connection-timeout: 30000
+    #          idle-timeout: 600000
+    #          max-lifetime: 1800000
+    #          auto-commit: false
+
+
+
+
+    replica:
+      url: jdbc:mysql://mysql-replica:3306/lipanasi?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true&serverTimezone=Africa/Dar_es_Salaam
+      jdbc-url: jdbc:mysql://mysql-replica:3306/lipanasi?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true&serverTimezone=Africa/Dar_es_Salaam
+      username: ${SPRING_DATASOURCE_USERNAME}
+      password: ${SPRING_DATASOURCE_PASSWORD}
+      driver: com.mysql.cj.jdbc.Driver
+      hikari:
+        read-only: true
+        hikari:
+          connection-timeout: 20000 # 20 seconds
+          maximum-pool-size: 17
+          minimum-idle: 8
+          pool-name: payscoop-replica-pool
+          idle-timeout: 300000 # 5 minutes
+          max-lifetime: 1200000 # 20 minutes
+          register-mbeans: true
+          read-only: true
+
+  #          maximum-pool-size: 7
+  #          minimum-idle: 3
+  #          connection-timeout: 30000
+  #          idle-timeout: 600000
+  #          max-lifetime: 1800000
+  #          auto-commit: false
+  #          read-only: true
+
+
+  #    monitoring:
+  #      url: jdbc:mysql://mysql-replica:3306/scoop?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true&serverTimezone=UTC
+  #      jdbc-url: jdbc:mysql://mysql-replica:3306/scoop?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true&serverTimezone=UTC
+  #      username: scoop_prod
+  #      password: S0%PuRVxK#3pT!sWqhT
+  #      driver-class-name: com.mysql.cj.jdbc.Driver
+  #      hikari:
+  #        pool-name: monitoring-pool
+  #        maximum-pool-size: 10
+  #        minimum-idle: 3
+  #        connection-timeout: 5000
+  #        idle-timeout: 30000
+  #        max-lifetime: 120000
+  #        read-only: true
+  #        connection-test-query: SELECT 1
+  #        initialization-fail-timeout: 30000
+
+
+  #      hikari:
+  #        connection-timeout: 30000  # 30 seconds
+  #        maximum-pool-size: 100      # Based on your 4 CPU cores
+  #        minimum-idle: 50          # Reduced to account for resource availability
+  #        pool-name: payment-gateway-pool
+  #        idle-timeout: 300000      # 5 minutes
+  #        max-lifetime: 1200000     # 20 minutes
+  ##        register-mbeans: true
+  ##        leak-detection-threshold: 10000 # Detect connection leaks
+  ##        connection-test-query: SELECT 1
+
+  mail:
+    host: your-smtp-server
+    port: 587
+    username: your-username
+    password: your-password
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+
+
+
+
+  camel:
+    springboot:
+      main-run-controller: true
+    component:
+      spring-rabbitmq:
+        acknowledge-mode: AUTO
+        auto-declare: true
+        dead-letter-exchange: dlx.exchange
+        dead-letter-queue: dlq
+        dead-letter-routing-key: dlq.routing.key
+
+# RabbitMQ Configuration
+
+rabbitmq:
+  host: ${SPRING_RABBITMQ_HOST}
+  port: ${SPRING_RABBITMQ_PORT}
+  username: payscoop
+  password: p@ysC00p#2025
+
+# CyberSource Configuration - for CRDB integration
+
+cybersource:
+  merchant:
+    id: ${CYBERSOURCE_MERCHANT_ID}
+  api:
+    key:
+      id: ${CYBERSOURCE_API_KEY_ID}
+  secret:
+    key: ${CYBERSOURCE_SECRET_KEY}
+  environment: ${CYBERSOURCE_ENVIRONMENT}
+
+# Payment Gateway Configuration - for payment gateway integration (this was used for testing)
+payment:
+  gateway:
+    endpoint: https://api.payment-gateway.example.com
+    api-key: ${PAYMENT_GATEWAY_API_KEY}
+    merchant-id: ${MERCHANT_ID}
+    return-url: https://your-application.com/payments/3ds-return
+    connection-timeout: 5000
+    read-timeout: 30000
+
+# Redis Configuration
+redis:
+  host: ${SPRING_REDIS_HOST} #10.4.9.33
+  port: ${SPRING_REDIS_PORT} #7000
+  password: pXcW9G50V32t
+  timeout: 2000
+  database: 0
+
+
+# Order Configuration
+order:
+  session:
+    expiry:
+      default: ${SPRING_ORDER_SESSION_EXPIRY}
+
+# scoop card payment related configuration
+app:
+  security:
+    api-key: cd3f2dee-b4c0-47b7-b71c-c35b2c55e8b1
+
+# Rate Limiting Configuration
+ratelimit:
+  default:
+    max-requests: 100
+    window-seconds: 60
+  payment:
+    max-requests: 20
+    window-seconds: 60
+
+# Alert Configuration
+alert:
+  email:
+    to: alerts@greentelecom.co.tz
+    from: alerts@greentelecom.co.tz
+
+# Thread Pool Configuration
+thread:
+  pool:
+    core-size: ${THREAD_POOL_CORE_SIZE}
+    max-size: ${THREAD_POOL_MAX_SIZE}
+    keep-alive-time: ${THREAD_POOL_KEEP_ALIVE_TIME}
+    queue-capacity: ${THREAD_POOL_QUEUE_CAPACITY}
+
+# App Secret Key - for decrypting sensitive data
+decrypt:
+  app:
+    secret-key: ${APP_SECRET_KEY}
+
+# (payscoop business) Network Config Rest API URLs
+partner:
+  validation:
+    url: ${PARTNER_VALIDATION_URL}
+
+network:
+  config:
+    url: ${NETWORK_CONFIG_URL}
+
+# (payscoop business) PayScoop API URLs - for getting merchant related configurations
+payscoop:
+  api:
+    business:
+      base-url: ${PAYSCOOP_BUSINESS_API_BASE_URL}
+
+
+# (payscoop business) Softnet API URLs - for getting merchant related configurations
+softnet:
+  api:
+    baseUrl: "https://api.softnet.com"
+    username: "your_username"
+    password: "your_password"
+    tinNumber: "your_tin"
+    timeout: 30000
+
+
+
+payment-gateway:
+  scoop:
+    deposit-url: "http://localhost:8080/api/v1/deposit"
+    tps: 10
+    idempotency:
+      window-seconds: 3600
+    batch-size: 50
+    processing-timeout-minutes: 30
+    dedup-expiry-hours: 24
+    crdb:
+      tps: 10
+      payment:
+        url: "http://localhost:8442/api/v1/crdb/payment/process"
+  halopesa:
+    api-url: https://sandbox.halopesa.com/api/v1
+    sp-id: "300300"
+    secret-key: "m_b%T2020"
+    merchant-code: "300300"
+  mpesa:
+    paybill:
+      sp-id: "300300"
+      sp-password: "2zpeQ5Zk"
+      api-base-url: ${MPESA_PAYBILL_API_URL}
+      callback-url: ${MPESA_PAYBILL_CALLBACK_URL}
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+    circuitbreakers:
+      enabled: true
+  security:
+    enabled: false
+  health:
+    mail:
+      enabled: false
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      mobileMoneyChannel:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 5s
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        minimumNumberOfCalls: 10
+        slidingWindowType: TIME_BASED
+        slidingWindowSize: 60
+    configs:
+      default:
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        minimumNumberOfCalls: 10
+
+
+logstash:
+  host: ${LOGSTASH_HOST:10.4.9.34}
+  port: ${LOGSTASH_PORT:5000}
+
+logging:
+  level:
+    root: INFO
+    com.gtl.pg.scoop: INFO
+    com.zaxxer.hikari: INFO
+    org.springframework.transaction: INFO
+    org.springframework.jdbc: INFO
+    com.gtl.pg.scoop.configs: INFO
+    # org.springframework.jdbc: INFO
+    logging:
+      level:
+        com:
+          gtl:
+            pg:
+              scoop:
+                configs:
+                  RoutingDataSourceConfig: INFO
+
+
+server:
+  port: 8442

@@ -1,0 +1,139 @@
+services:
+  # MySQL Primary Database
+  mysql-primary:
+    image: mysql:8.0
+    container_name: mysql-primary
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${DB_NAME}"
+      MYSQL_USER: "${DB_USERNAME}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_REPLICATION_USER: "${DB_REPLICATION_USER}"
+      MYSQL_REPLICATION_PASSWORD: "${DB_REPLICATION_PASSWORD}"
+    volumes:
+      - mysql-primary-data:/var/lib/mysql
+      - ./mysql/primary/conf.d:/etc/mysql/conf.d
+    ports:
+      - "3306:3306"
+    networks:
+      - payment-gw-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      --server-id=1
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --binlog-do-db=${DB_NAME}
+      --gtid-mode=ON
+      --enforce-gtid-consistency=ON
+      --log-slave-updates
+      --binlog-group-commit-sync-delay=100
+
+  # MySQL Replica Database
+  mysql-replica:
+    image: mysql:8.0
+    container_name: mysql-replica
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+    volumes:
+      - mysql-replica-data:/var/lib/mysql
+      - ./mysql/replica/conf.d:/etc/mysql/conf.d
+    ports:
+      - "3307:3306"
+    networks:
+      - payment-gw-network
+    depends_on:
+      mysql-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      --server-id=2
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --gtid-mode=ON
+      --enforce-gtid-consistency=ON
+      --skip-slave-start
+
+  server:
+    container_name: payment-gw-server
+    image: greentelecom/scoop-payment-gw-engine-ha-proxy:latest
+    ports:
+      - 8082:8082
+    volumes:
+      - ./:/build/logs
+      - ~/.m2:/root/.m2
+      - ./access-refresh-token-keys:/build/access-refresh-token-keys
+      - ./logstash-config:/build/logback/config
+      - ./logstash-pipeline:/build/logstash/pipeline
+    environment:
+      SPRING_DATASOURCE_URL: "${PRIMARY_DB_URL}"
+      SPRING_DATASOURCE_USERNAME: "${DB_USERNAME}"
+      SPRING_DATASOURCE_PASSWORD: "${DB_PASSWORD}"
+      SPRING_REPLICA_DATASOURCE_URL: "${REPLICA_DB_URL}"
+      SPRING_REPLICA_DATASOURCE_USERNAME: "${REPLICA_DB_USERNAME}"
+      SPRING_REPLICA_DATASOURCE_PASSWORD: "${REPLICA_DB_PASSWORD}"
+      SPRING_REPLICA_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      SPRING_RABBITMQ_HOST: "${RMQ_HOST}"
+      SPRING_RABBITMQ_PORT: "${RMQ_PORT}"
+      SPRING_RABBITMQ_USERNAME: "${RMQ_USERNAME}"
+      SPRING_RABBITMQ_PASSWORD: "${RMQ_PASSWORD}"
+      SPRING_REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      SPRING_REDIS_HOST: "${REDIS_HOST}"
+      SPRING_REDIS_PORT: "${REDIS_PORT}"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      SPRING_JPA_PROPERTIES_HIBERNATE_TRANSACTION_JTA_PLATFORM: org.hibernate.engine.transaction.jta.platform.internal.AtomikosJtaPlatform
+      JAVA_OPTS: >
+        -Xms1g
+        -Xmx2g
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=200
+        -XX:+HeapDumpOnOutOfMemoryError
+        -XX:HeapDumpPath=/build/logs/heapdump.hprof
+        -XX:+DisableExplicitGC
+        -XX:G1ReservePercent=20
+        -XX:InitiatingHeapOccupancyPercent=45
+        -Xlog:gc*:/build/logs/gc.log:time,uptime:filecount=5,filesize=100m
+        -XX:+FlightRecorder
+        -XX:StartFlightRecording=duration=60s,filename=/build/logs/recording.jfr
+      # Add logging configuration for logstash
+      LOGGING_CONFIG: classpath:logback-spring.xml
+      LOGSTASH_HOST: 10.4.9.34
+      LOGSTASH_PORT: 5000
+#      GRAYLOG_HOST: 172.16.16.106
+#      GRAYLOG_PORT: 12201
+    deploy:
+      resources:
+        limits:
+          memory: 2072M    # 3G in megabytes
+          cpus: '2'
+        reservations:
+          memory: 1560M    # 2.5G in megabytes
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8082/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - payment-gw-network
+
+volumes:
+  mysql-primary-data:
+  mysql-replica-data:
+
+networks:
+  payment-gw-network:
+    driver: bridge
+    external: true
+    name: payment-gw-network  # Explicitly specify the network name
