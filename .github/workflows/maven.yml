@@ -88,9 +88,9 @@ jobs:
           # Create deployment directory
           sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "mkdir -p $DEPLOY_PATH"
 
-          # Write env vars to remote file using printf — avoids YAML/heredoc conflicts
+          # Write env vars to remote file using printf
           sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \
-            "printf 'SUDO_PASSWORD=%s\\nREMOTE_PASSWORD=%s\\nDOCKER_PASSWORD=%s\\nREMOTE_PATH=%s\\n' '$SERVER_PASS' '$SERVER_PASS' '$DOCKER_PASSWORD' '$DEPLOY_PATH' > $DEPLOY_PATH/.deploy-env"
+            "printf 'SUDO_PASSWORD=%s\nREMOTE_PASSWORD=%s\nDOCKER_PASSWORD=%s\nREMOTE_PATH=%s\n' \"$SERVER_PASS\" \"$SERVER_PASS\" \"$DOCKER_PASSWORD\" \"$DEPLOY_PATH\" > $DEPLOY_PATH/.deploy-env"
 
           # Copy deployment files
           for file in deploy.sh redis-cluster-setup-script.sh mysql.Dockerfile dhub_password.txt healthcheck.sh .env docker-compose-payment-gw.yaml docker-compose-redis-cluster.yaml docker-compose-lipanasi-elk-stack.yaml; do

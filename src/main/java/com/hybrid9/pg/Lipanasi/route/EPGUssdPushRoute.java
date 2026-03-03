@@ -399,7 +399,7 @@ public class EPGUssdPushRoute extends RouteBuilder {
                         "Transaction ID: ${header.transactionId}\n" +
                         "Reference: ${header.reference}\n" +
                         "Error: ${exception.message}"))
-                .toD("smtp://smtp.gmail.com:587?username=alerts@greentelecom.co.tz&password=gTLnra@c2");
+                .toD("smtp://smtp.gmail.com:587?username=alerts@lipanasi.co.tz&password=gTLnra@c2");
 
         // Vendor Callback route
         from("direct:halopesa-tanzania-init-vendor-callback")

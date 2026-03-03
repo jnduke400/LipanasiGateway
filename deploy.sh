@@ -82,10 +82,10 @@ fi"
 echo "Performing Docker operations..."
 
 # Docker login
-run_ssh_command "echo '$DOCKER_PASSWORD' | sudo docker login --username greentelecom --password-stdin"
+run_ssh_command "echo "$DOCKER_PASSWORD" | sudo docker login --username ndukedocker --password-stdin"
 
 # Pull latest image
-run_ssh_command "echo '$SUDO_PASSWORD' | sudo -S docker pull greentelecom/mbet-payment-gw-engine-lb:latest"
+run_ssh_command "echo '$SUDO_PASSWORD' | sudo -S docker pull ndukedocker/mbet-payment-gw-engine-lb:latest"
 
 # Required for Elasticsearch
 echo "Setting vm.max_map_count for Elasticsearch..."
