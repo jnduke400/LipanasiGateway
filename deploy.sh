@@ -1,4 +1,14 @@
 #!/bin/bash
+set -e
+
+# Load environment variables
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/.deploy-env" ]; then
+    source "$SCRIPT_DIR/.deploy-env"
+    echo "Loaded .deploy-env successfully"
+else
+    echo "Warning: .deploy-env not found"
+fi
 
 echo 'Starting to Deploy...'
 echo "REMOTE_PATH: $REMOTE_PATH"
