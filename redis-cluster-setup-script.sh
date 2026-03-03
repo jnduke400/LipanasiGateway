@@ -3,6 +3,15 @@
 
 set -e
 
+# Load environment variables from deploy-env file
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/.deploy-env" ]; then
+    source "$SCRIPT_DIR/.deploy-env"
+    echo "Loaded .deploy-env successfully"
+else
+    echo "Warning: .deploy-env not found at $SCRIPT_DIR/.deploy-env"
+fi
+
 echo 'Starting Redis Cluster Deployment...'
 echo "REMOTE_PATH: $REMOTE_PATH"
 echo "REMOTE_PASSWORD: $SERVER_PASS"
