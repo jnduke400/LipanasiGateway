@@ -58,8 +58,8 @@ cluster-announce-bus-port 16379
 maxmemory 1gb
 maxmemory-policy allkeys-lru
 appendonly yes
-requirepass Si*%PuR=!xK!3pT@sWq<=>
-masterauth Si*%PuR=!xK!3pT@sWq<=>
+requirepass rEd1s123
+masterauth rEd1s123
 protected-mode yes
 dir /data
 EOF"
@@ -107,7 +107,7 @@ sleep 15
 
 # Create the Redis cluster using redis-cli
 echo "Creating Redis cluster..."
-run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker run --rm --network redis-cluster_redis-net redis:7.2 redis-cli -a 'Si*%PuR=!xK!3pT@sWq<=>' --cluster create \
+run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker run --rm --network redis-cluster_redis-net redis:7.2 redis-cli -a rEd1s123 --cluster create \
     172.28.0.11:6379 \
     172.28.0.12:6379 \
     172.28.0.13:6379 \
@@ -123,7 +123,7 @@ sleep 10
 
 # Verify cluster status
 echo "Verifying Redis cluster status..."
-CLUSTER_INFO=$(run_ssh_command "cd $REMOTE_PATH && docker run --rm --network redis-cluster_redis-net redis:7.2 redis-cli -a 'Si*%PuR=!xK!3pT@sWq<=>' -h 172.28.0.11 cluster info")
+CLUSTER_INFO=$(run_ssh_command "cd $REMOTE_PATH && docker run --rm --network redis-cluster_redis-net redis:7.2 redis-cli -a rEd1s123 -h 172.28.0.11 cluster info")
 echo "$CLUSTER_INFO"
 
 # Check if cluster is healthy
@@ -134,20 +134,20 @@ if [[ "$CLUSTER_STATE" == "ok" ]]; then
 
     # Show cluster nodes
     echo -e "\nCluster nodes:"
-    run_ssh_command "cd $REMOTE_PATH && docker run --rm --network redis-cluster_redis-net redis:7.2 redis-cli -a 'Si*%PuR=!xK!3pT@sWq<=>' -h 172.28.0.11 cluster nodes | head -10"
+    run_ssh_command "cd $REMOTE_PATH && docker run --rm --network redis-cluster_redis-net redis:7.2 redis-cli -a rEd1s123 -h 172.28.0.11 cluster nodes | head -10"
 
     echo -e "\n📊 Monitor your Redis Cluster at: http://75.119.130.98:8081"
     echo "🔍 Redis Commander credentials: No password required (configured in docker-compose)"
 else
     echo "❌ Redis Cluster may not be healthy. Current state: $CLUSTER_STATE"
     echo "Checking cluster nodes..."
-    run_ssh_command "cd $REMOTE_PATH && docker run --rm --network redis-cluster_redis-net redis:7.2 redis-cli -a 'Si*%PuR=!xK!3pT@sWq<=>' -h 172.28.0.11 cluster nodes"
+    run_ssh_command "cd $REMOTE_PATH && docker run --rm --network redis-cluster_redis-net redis:7.2 redis-cli -a rEd1s123 -h 172.28.0.11 cluster nodes"
     handle_error "Redis Cluster health check failed"
 fi
 
 # Optional: Test cluster with a simple key operation
 echo -e "\nTesting cluster with sample key operations..."
-TEST_RESULT=$(run_ssh_command "cd $REMOTE_PATH && docker run --rm --network redis-cluster_redis-net redis:7.2 redis-cli -a 'Si*%PuR=!xK!3pT@sWq<=>' -c -h 172.28.0.11 set test:key 'Redis Cluster is working!' && docker run --rm --network redis-cluster_redis-net redis:7.2 redis-cli -a 'Si*%PuR=!xK!3pT@sWq<=>' -c -h 172.28.0.11 get test:key")
+TEST_RESULT=$(run_ssh_command "cd $REMOTE_PATH && docker run --rm --network redis-cluster_redis-net redis:7.2 redis-cli -a rEd1s123 -c -h 172.28.0.11 set test:key 'Redis Cluster is working!' && docker run --rm --network redis-cluster_redis-net redis:7.2 redis-cli -a rEd1s123 -c -h 172.28.0.11 get test:key")
 echo "Test result: $TEST_RESULT"
 
 if [[ "$TEST_RESULT" == *"Redis Cluster is working!"* ]]; then

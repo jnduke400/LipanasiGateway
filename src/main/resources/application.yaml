@@ -180,7 +180,7 @@ payment:
 
 # Redis Configuration
 redis:
-  password: "Si*%PuR=!xK!3pT@sWq<=>"
+  password: "rEd1s123"
   timeout: 2000
   cluster:
     nodes:
