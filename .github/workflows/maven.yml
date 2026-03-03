@@ -13,12 +13,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+
       - name: Build with Maven
         run: mvn clean install -DskipTests
 
@@ -35,14 +37,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      #      - name: Copy files and setup environment
-      #        run: |
-      #          {
-      #
-      #          } > .env
       - name: Copy files and setup environment
         run: |
-          {           
+          {
             echo "DB_USERNAME: ${{secrets.DB_USERNAME}}"
             echo "DB_PASSWORD: ${{secrets.DB_PASSWORD}}"
             echo "DB_ROOT_PASSWORD: ${{secrets.DB_ROOT_PASSWORD}}"
@@ -51,7 +48,6 @@ jobs:
             echo "DB_REPLICATION_PASSWORD: ${{secrets.DB_REPLICATION_PASSWORD}}"
             echo "RMQ_USERNAME: ${{secrets.RMQ_USERNAME}}"
             echo "RMQ_PASSWORD: ${{secrets.RMQ_PASSWORD}}"
-          
             echo "APP_SECRET_KEY: ${{secrets.APP_SECRET_KEY}}"
             echo "DB_TIMEZONE: ${{secrets.DB_TIMEZONE}}"
             echo "LIPANASI_BUSINESS_API_BASE_URL: ${{secrets.LIPANASI_BUSINESS_API_BASE_URL}}"
@@ -71,8 +67,7 @@ jobs:
             echo "THREAD_POOL_KEEP_ALIVE_TIME: ${{secrets.THREAD_POOL_KEEP_ALIVE_TIME}}"
             echo "THREAD_POOL_MAX_SIZE: ${{secrets.THREAD_POOL_MAX_SIZE}}"
             echo "THREAD_POOL_QUEUE_CAPACITY: ${{secrets.THREAD_POOL_QUEUE_CAPACITY}}"
-            
-          } > .env      
+          } > .env
 
       - name: Deploy to Server
         env:
@@ -81,28 +76,27 @@ jobs:
           SERVER_PORT: ${{ secrets.HA_PROXY_PORT }}
           SERVER_PASS: ${{ secrets.HA_PROXY_PASSWORD }}
           DEPLOY_PATH: ${{ secrets.HA_PROXY_BASE_DIRECTORY }}
-          INST_TWO_PASS: ${{secrets.REMOTE_PASSWORD_INST_2}}
-          INST_TWO_USER: ${{secrets.REMOTE_USER_INST_2}}
-          INST_TWO_IP: ${{secrets.REMOTE_IP_INST_2}}
-          DB_USERNAME: ${{secrets.DB_USERNAME}}
-          DB_PASSWORD: ${{secrets.DB_PASSWORD}}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          INST_TWO_PASS: ${{ secrets.REMOTE_PASSWORD_INST_2 }}
+          INST_TWO_USER: ${{ secrets.REMOTE_USER_INST_2 }}
+          INST_TWO_IP: ${{ secrets.REMOTE_IP_INST_2 }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
-          # Create deployment directory if it doesn't exist
-          export SSHPASS=$SERVER_PASS   
-          
-          # Write a remote env file instead of inline exports — avoids quoting hell
+          export SSHPASS=$SERVER_PASS
+
+          # Create deployment directory
+          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "mkdir -p $DEPLOY_PATH"
+
+          # Write env vars to a remote file — avoids quoting issues with special chars in secrets
           sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \
-          "cat > $DEPLOY_PATH/.deploy-env << 'ENVEOF'
+            "cat > $DEPLOY_PATH/.deploy-env << 'ENVEOF'
           SUDO_PASSWORD=$SERVER_PASS
           REMOTE_PASSWORD=$SERVER_PASS
           DOCKER_PASSWORD=$DOCKER_PASSWORD
           REMOTE_PATH=$DEPLOY_PATH
           ENVEOF"
-         
-          
-          # Create directory and handle connection warnings
-          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "mkdir -p $DEPLOY_PATH"
-          
+
           # Copy deployment files
           for file in deploy.sh redis-cluster-setup-script.sh mysql.Dockerfile dhub_password.txt healthcheck.sh .env docker-compose-payment-gw.yaml docker-compose-redis-cluster.yaml docker-compose-lipanasi-elk-stack.yaml; do
             if [ -f "$file" ]; then
@@ -111,38 +105,32 @@ jobs:
               echo "Warning: $file not found, skipping..."
             fi
           done
-          
-          # Create required directories on the server
+
+          # Create Logstash directories
           echo "Creating Logstash directories on server..."
-          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT "$SERVER_USER@$SERVER_HOST" "mkdir -p $DEPLOY_PATH/logstash/config $DEPLOY_PATH/logstash/pipeline"
-          
+          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT "$SERVER_USER@$SERVER_HOST" \
+            "mkdir -p $DEPLOY_PATH/logstash/config $DEPLOY_PATH/logstash/pipeline"
+
           # Copy Logstash config files
           echo "Copying Logstash config files..."
           if [ -d "logstash/config" ]; then
             sshpass -e scp -o StrictHostKeyChecking=no -P $SERVER_PORT logstash/config/* "$SERVER_USER@$SERVER_HOST:$DEPLOY_PATH/logstash/config/"
           else
-          echo "Warning: logstash/config directory not found, skipping..."
+            echo "Warning: logstash/config directory not found, skipping..."
           fi
-          
+
           # Copy Logstash pipeline files
           echo "Copying Logstash pipeline files..."
           if [ -d "logstash/pipeline" ]; then
             sshpass -e scp -o StrictHostKeyChecking=no -P $SERVER_PORT logstash/pipeline/* "$SERVER_USER@$SERVER_HOST:$DEPLOY_PATH/logstash/pipeline/"
           else
-          echo "Warning: logstash/pipeline directory not found, skipping..."
-          fi         
-          
-          
-          # Set execute permissions and run deploy.sh in separate commands
+            echo "Warning: logstash/pipeline directory not found, skipping..."
+          fi
 
-          #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x deploy.sh && ./deploy.sh"
-          #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x deploy.sh && export SUDO_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export REMOTE_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export DOCKER_PASSWORD='${{ secrets.DOCKER_PASSWORD }}' && export REMOTE_PATH='${{ secrets.HA_PROXY_BASE_DIRECTORY }}' && ./deploy.sh"
-          #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x redis-cluster-setup-script.sh && export SUDO_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export REMOTE_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export DOCKER_PASSWORD='${{ secrets.DOCKER_PASSWORD }}' && export REMOTE_PATH='${{ secrets.HA_PROXY_BASE_DIRECTORY }}' && ./redis-cluster-setup-script.sh"
-          #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \"cd $DEPLOY_PATH && chmod +x redis-cluster-setup-script.sh && \export REMOTE_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && \export SUDO_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && \export REMOTE_PATH='${{ secrets.HA_PROXY_BASE_DIRECTORY }}' && \./redis-cluster-setup-script.sh"
-          
-          # deploy.sh call also becomes:
-          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \"cd $DEPLOY_PATH && source .deploy-env && chmod +x deploy.sh && ./deploy.sh"
-          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \"cd $DEPLOY_PATH && source .deploy-env && chmod +x redis-cluster-setup-script.sh && ./redis-cluster-setup-script.sh"
-          
-          #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x lb2_pre_deploy.sh && ./lb2_pre_deploy.sh"
-          #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && ./deploy.sh"
+          # Run deploy.sh
+          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \
+            "cd $DEPLOY_PATH && source .deploy-env && chmod +x deploy.sh && ./deploy.sh"
+
+          # Run redis cluster setup
+          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \
+            "cd $DEPLOY_PATH && source .deploy-env && chmod +x redis-cluster-setup-script.sh && ./redis-cluster-setup-script.sh"
