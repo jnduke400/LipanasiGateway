@@ -7,13 +7,13 @@
     <!--    <springProperty scope="context" name="logstashPort" source="LOGSTASH_PORT"/>-->
 
     <!--    Define properties with default values &ndash-->
-    <springProperty scope="context" name="LOGSTASH_HOST" source="logstash.host" defaultValue="localhost"/>
+    <springProperty scope="context" name="LOGSTASH_HOST" source="logstash.host" defaultValue="logstash"/>
     <springProperty scope="context" name="LOGSTASH_PORT" source="logstash.port" defaultValue="5000"/>
 
     <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
         <destination>${LOGSTASH_HOST}:${LOGSTASH_PORT}</destination>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <customFields>{"app":"payscoop-engine","type":"scoop-payment-logs"}</customFields>
+            <customFields>{"app":"scoop-engine","type":"scoop-payment-logs"}</customFields>
         </encoder>
 
         <!--         Retry settings -->
