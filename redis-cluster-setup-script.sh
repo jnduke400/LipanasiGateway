@@ -68,12 +68,12 @@ done
 # Copy docker-compose file to remote server
 echo "Copying Docker Compose file to remote server..."
 # First, ensure we have the docker-compose file content
-if [ ! -f "docker-compose-redis-cluster.yml" ]; then
-    handle_error "docker-compose-redis-cluster.yml not found in current directory"
+if [ ! -f "docker-compose-redis-cluster.yaml" ]; then
+    handle_error "docker-compose-redis-cluster.yaml not found in current directory"
 fi
 
 # Read the docker-compose file and create it on remote server
-run_ssh_command "cat > $REMOTE_PATH/docker-compose-redis-cluster.yml" < docker-compose-redis-cluster.yml
+run_ssh_command "cat > $REMOTE_PATH/docker-compose-redis-cluster.yaml" < docker-compose-redis-cluster.yaml
 
 # Install Docker and Docker Compose if not already installed
 echo "Ensuring Docker and Docker Compose are installed..."
@@ -95,11 +95,11 @@ fi"
 
 # Stop and remove any existing Redis containers
 echo "Cleaning up existing Redis containers..."
-run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-redis-cluster.yml down -v 2>/dev/null || true"
+run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-redis-cluster.yaml down -v 2>/dev/null || true"
 
 # Start Redis cluster
 echo "Starting Redis cluster..."
-run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-redis-cluster.yml up -d"
+run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-redis-cluster.yaml up -d"
 
 # Wait for containers to be ready
 echo "Waiting for Redis containers to start..."
