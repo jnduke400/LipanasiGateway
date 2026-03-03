@@ -23,12 +23,12 @@ handle_error() {
 
 # Prompt for credentials if not provided as environment variables
 if [ -z "$REMOTE_PASSWORD" ]; then
-    read -sp "Enter password for mbet@75.119.130.98: " REMOTE_PASSWORD
+    read -sp "Enter password for root@75.119.130.98: " REMOTE_PASSWORD
     echo
 fi
 
 if [ -z "$SUDO_PASSWORD" ]; then
-    read -sp "Enter sudo password for mbet@75.119.130.98: " SUDO_PASSWORD
+    read -sp "Enter sudo password for root@75.119.130.98: " SUDO_PASSWORD
     echo
 fi
 
@@ -85,7 +85,7 @@ echo "Performing Docker operations..."
 run_ssh_command "echo "$DOCKER_PASSWORD" | sudo docker login --username ndukedocker --password-stdin"
 
 # Pull latest image
-run_ssh_command "echo '$SUDO_PASSWORD' | sudo -S docker pull ndukedocker/mbet-payment-gw-engine-lb:latest"
+run_ssh_command "echo '$SUDO_PASSWORD' | sudo -S docker pull ndukedocker/lipanasi-payment-gw-engine:latest"
 
 # Required for Elasticsearch
 echo "Setting vm.max_map_count for Elasticsearch..."
