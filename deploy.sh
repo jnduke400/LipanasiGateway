@@ -92,6 +92,15 @@ echo "Setting vm.max_map_count for Elasticsearch..."
 echo "$SUDO_PASSWORD" | sudo -S sysctl -w vm.max_map_count=262144
 echo "$SUDO_PASSWORD" | sudo -S sh -c 'echo "vm.max_map_count=262144" >> /etc/sysctl.conf'
 
+# Fix Elasticsearch data directory permissions
+echo "$SUDO_PASSWORD" | sudo -S mkdir -p /usr/local/elasticsearch-data
+echo "$SUDO_PASSWORD" | sudo -S chown -R 1000:1000 /usr/local/elasticsearch-data
+echo "$SUDO_PASSWORD" | sudo -S chmod -R 755 /usr/local/elasticsearch-data
+
+echo "$SUDO_PASSWORD" | sudo -S mkdir -p /usr/local/rabbitmq-data /usr/local/rabbitmq-prod-data
+echo "$SUDO_PASSWORD" | sudo -S chown -R 999:999 /usr/local/rabbitmq-data /usr/local/rabbitmq-prod-data
+```
+
 # Change directory to REMOTE_PATH and run docker-compose for elk stack
 run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-lipanasi-elk-stack.yaml up --build -d --remove-orphans"
 
