@@ -15,7 +15,7 @@ services:
       - mysql-primary-data:/var/lib/mysql
       - ./mysql/primary/conf.d:/etc/mysql/conf.d
     ports:
-      - "3306:3306"
+      - "3308:3306"
     networks:
       - payment-gw-network
     healthcheck:
