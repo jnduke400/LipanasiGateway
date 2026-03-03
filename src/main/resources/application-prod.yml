@@ -2,8 +2,8 @@ ACCESS_TOKEN_PRIVATE_KEY_PATH: "/build/access-refresh-token-keys/access-token-pr
 ACCESS_TOKEN_PUBLIC_KEY_PATH: "/build/access-refresh-token-keys/access-token-public.key"
 REFRESH_TOKEN_PRIVATE_KEY_PATH: "/build/access-refresh-token-keys/refresh-token-private.key"
 REFRESH_TOKEN_PUBLIC_KEY_PATH: "/build/access-refresh-token-keys/refresh-token-public.key"
-MYSQL_USERNAME: "mbet"
-MYSQL_PASSWORD: "LM6GPHfd*67ez9)u2vkQk_L6PDG!"
+MYSQL_USERNAME: "payment"
+MYSQL_PASSWORD: "S0*PuRVxK#3pT@sWqhT"
 MYSQL_HOST: "localhost"
 MYSQL_PORT: '3306'
 MYSQL_DB: "pg_mbet"
