@@ -90,11 +90,11 @@ jobs:
 
           # Write env vars to remote file (heredoc lines must have NO leading spaces)
           sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cat > $DEPLOY_PATH/.deploy-env << 'ENVEOF'
-          SUDO_PASSWORD=$SERVER_PASS
-          REMOTE_PASSWORD=$SERVER_PASS
-          DOCKER_PASSWORD=$DOCKER_PASSWORD
-          REMOTE_PATH=$DEPLOY_PATH
-          ENVEOF"
+SUDO_PASSWORD=$SERVER_PASS
+REMOTE_PASSWORD=$SERVER_PASS
+DOCKER_PASSWORD=$DOCKER_PASSWORD
+REMOTE_PATH=$DEPLOY_PATH
+ENVEOF"
 
           # Copy deployment files
           for file in deploy.sh redis-cluster-setup-script.sh mysql.Dockerfile dhub_password.txt healthcheck.sh .env docker-compose-payment-gw.yaml docker-compose-redis-cluster.yaml docker-compose-lipanasi-elk-stack.yaml; do
