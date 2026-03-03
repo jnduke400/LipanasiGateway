@@ -48,6 +48,7 @@ jobs:
             echo "DB_ROOT_PASSWORD: ${{secrets.DB_ROOT_PASSWORD}}"
             echo "DB_NAME: ${{secrets.DB_NAME}}"
             echo "DB_REPLICATION_USER: ${{secrets.DB_REPLICATION_USER}}"
+            echo "DB_REPLICATION_PASSWORD: ${{secrets.DB_REPLICATION_PASSWORD}}"
             echo "RMQ_USERNAME: ${{secrets.RMQ_USERNAME}}"
             echo "RMQ_PASSWORD: ${{secrets.RMQ_PASSWORD}}"
           
@@ -61,6 +62,7 @@ jobs:
             echo "REDIS_PASSWORD: ${{secrets.REDIS_PASSWORD}}"
             echo "REPLICA_DB_URL: ${{secrets.REPLICA_DB_URL}}"
             echo "RMQ_HOST: ${{secrets.RMQ_HOST}}"
+            echo "RMQ_PORT: ${{secrets.RMQ_PORT}}"
             echo "RMQ_PASSWORD: ${{secrets.RMQ_PASSWORD}}"
             echo "RMQ_PROD_PASSWORD: ${{secrets.RMQ_PROD_PASSWORD}}"
             echo "RMQ_PROD_USERNAME: ${{secrets.RMQ_PROD_USERNAME}}"
@@ -86,7 +88,17 @@ jobs:
           DB_PASSWORD: ${{secrets.DB_PASSWORD}}
         run: |
           # Create deployment directory if it doesn't exist
-          export SSHPASS=$SERVER_PASS
+          export SSHPASS=$SERVER_PASS   
+          
+          # Write a remote env file instead of inline exports — avoids quoting hell
+          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \
+          "cat > $DEPLOY_PATH/.deploy-env << 'ENVEOF'
+          SUDO_PASSWORD=$SERVER_PASS
+          REMOTE_PASSWORD=$SERVER_PASS
+          DOCKER_PASSWORD=$DOCKER_PASSWORD
+          REMOTE_PATH=$DEPLOY_PATH
+          ENVEOF"
+         
           
           # Create directory and handle connection warnings
           sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "mkdir -p $DEPLOY_PATH"
@@ -124,9 +136,13 @@ jobs:
           # Set execute permissions and run deploy.sh in separate commands
 
           #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x deploy.sh && ./deploy.sh"
-          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x deploy.sh && export SUDO_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export REMOTE_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export DOCKER_PASSWORD='${{ secrets.DOCKER_PASSWORD }}' && export REMOTE_PATH='${{ secrets.HA_PROXY_BASE_DIRECTORY }}' && ./deploy.sh"
+          #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x deploy.sh && export SUDO_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export REMOTE_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export DOCKER_PASSWORD='${{ secrets.DOCKER_PASSWORD }}' && export REMOTE_PATH='${{ secrets.HA_PROXY_BASE_DIRECTORY }}' && ./deploy.sh"
           #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x redis-cluster-setup-script.sh && export SUDO_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export REMOTE_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export DOCKER_PASSWORD='${{ secrets.DOCKER_PASSWORD }}' && export REMOTE_PATH='${{ secrets.HA_PROXY_BASE_DIRECTORY }}' && ./redis-cluster-setup-script.sh"
-          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \"cd $DEPLOY_PATH && chmod +x redis-cluster-setup-script.sh && \export REMOTE_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && \export SUDO_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && \export REMOTE_PATH='${{ secrets.HA_PROXY_BASE_DIRECTORY }}' && \./redis-cluster-setup-script.sh"
+          #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \"cd $DEPLOY_PATH && chmod +x redis-cluster-setup-script.sh && \export REMOTE_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && \export SUDO_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && \export REMOTE_PATH='${{ secrets.HA_PROXY_BASE_DIRECTORY }}' && \./redis-cluster-setup-script.sh"
+          
+          # deploy.sh call also becomes:
+          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \"cd $DEPLOY_PATH && source .deploy-env && chmod +x deploy.sh && ./deploy.sh"
+          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \"cd $DEPLOY_PATH && source .deploy-env && chmod +x redis-cluster-setup-script.sh && ./redis-cluster-setup-script.sh"
           
           #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x lb2_pre_deploy.sh && ./lb2_pre_deploy.sh"
           #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && ./deploy.sh"

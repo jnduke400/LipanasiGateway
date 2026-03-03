@@ -77,8 +77,24 @@ run_ssh_command "echo '$DOCKER_PASSWORD' | sudo docker login --username greentel
 # Pull latest image
 run_ssh_command "echo '$SUDO_PASSWORD' | sudo -S docker pull greentelecom/mbet-payment-gw-engine-lb:latest"
 
+# Required for Elasticsearch
+echo "Setting vm.max_map_count for Elasticsearch..."
+echo "$SUDO_PASSWORD" | sudo -S sysctl -w vm.max_map_count=262144
+echo "$SUDO_PASSWORD" | sudo -S sh -c 'echo "vm.max_map_count=262144" >> /etc/sysctl.conf'
+
 # Change directory to REMOTE_PATH and run docker-compose for elk stack
 run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-lipanasi-elk-stack.yaml up --build -d --remove-orphans"
+
+# Stop existing containers and free ports
+echo "Stopping existing containers..."
+docker-compose -f docker-compose-payment-gw.yaml down 2>/dev/null || true
+
+# If port 3306 is still bound by something outside compose, kill it
+if lsof -i :3306 &>/dev/null; then
+    echo "Port 3306 still in use, killing process..."
+    fuser -k 3306/tcp || true
+    sleep 3
+fi
 
 # Change directory to REMOTE_PATH and run docker-compose for payment gateway
 run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-payment-gw.yaml up --build -d --remove-orphans"
