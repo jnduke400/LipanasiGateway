@@ -1,4 +1,4 @@
-package com.hybrid9.pg.Lipanasi.dto.payscoopconfig;
+package com.hybrid9.pg.Lipanasi.dto.lipanasiconfig;
 
 import java.util.List;
 

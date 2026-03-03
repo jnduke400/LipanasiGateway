@@ -87,6 +87,6 @@ USER root
 # Switch back to the non-root user if needed.
 # USER appuser
 
-EXPOSE 8082
+EXPOSE 8284
 
 ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

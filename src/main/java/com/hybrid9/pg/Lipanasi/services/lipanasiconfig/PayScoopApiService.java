@@ -1,9 +1,10 @@
-package com.hybrid9.pg.Lipanasi.services.payscoopconfig;
+package com.hybrid9.pg.Lipanasi.services.lipanasiconfig;
 
-import com.hybrid9.pg.Lipanasi.dto.payscoopconfig.MerchantChargesResponse;
+import com.hybrid9.pg.Lipanasi.dto.lipanasiconfig.MerchantChargesResponse;
 import com.hybrid9.pg.Lipanasi.models.pgmodels.vendorx.VendorNetworkCharges;
 import com.hybrid9.pg.Lipanasi.services.payments.vendorx.VendorNetworkChargesService;
-import org.jetbrains.annotations.NotNull;
+//import org.jetbrains.annotations.NotNull;
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class PayScoopApiService {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("${payscoop.api.business.base-url:https://api.business.payscoop.com}")
+    @Value("${lipanasi.api.business.base-url:http://75.119.130.98:3032}")
     private String baseUrl;
 
     public MerchantChargesResponse getMerchantCharges(String mno, String chargeType, String bearerToken) {

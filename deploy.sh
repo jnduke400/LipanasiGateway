@@ -2,8 +2,8 @@
 
 echo 'Starting to Deploy...'
 echo "REMOTE_PATH: $REMOTE_PATH"
-echo "REMOTE_PASSWORD: $REMOTE_PASSWORD"
-echo "SUDO_PASSWORD: $SUDO_PASSWORD"
+echo "REMOTE_PASSWORD: $SERVER_PASS"
+echo "SUDO_PASSWORD: $SERVER_PASS"
 
 # Function to handle errors
 handle_error() {
@@ -13,12 +13,12 @@ handle_error() {
 
 # Prompt for credentials if not provided as environment variables
 if [ -z "$REMOTE_PASSWORD" ]; then
-    read -sp "Enter password for mbet@172.16.16.100: " REMOTE_PASSWORD
+    read -sp "Enter password for mbet@75.119.130.98: " REMOTE_PASSWORD
     echo
 fi
 
 if [ -z "$SUDO_PASSWORD" ]; then
-    read -sp "Enter sudo password for mbet@172.16.16.100: " SUDO_PASSWORD
+    read -sp "Enter sudo password for mbet@75.119.130.98: " SUDO_PASSWORD
     echo
 fi
 
@@ -27,40 +27,16 @@ if [ -z "$DOCKER_PASSWORD" ]; then
     echo
 fi
 
-# Create a temporary expect script for SSH commands
-cat > /tmp/ssh_script.exp << EOL
-#!/usr/bin/expect -f
-set timeout -1
-set host [lindex \$argv 0]
-set password [lindex \$argv 1]
-set sudo_password [lindex \$argv 2]
-set command [lindex \$argv 3]
+# Use sshpass instead of expect if you want to ssh to another server
+#run_ssh_command() {
+#    local command="$1"
+#    sshpass -p "$REMOTE_PASSWORD" ssh -o StrictHostKeyChecking=no root@75.119.130.98 "$command"
+#}
 
-spawn ssh \$host \$command
-expect {
-    "(yes/no)?" {
-        send "yes\r"
-        expect "password:"
-        send "\$password\r"
-    }
-    "password:" {
-        send "\$password\r"
-    }
-}
-expect {
-    "password for" {
-        send "\$sudo_password\r"
-    }
-}
-expect eof
-EOL
-
-chmod +x /tmp/ssh_script.exp
-
-# Function to run SSH commands with password
+# we are not expecting to ssh to another server, so we can use this simple function
 run_ssh_command() {
     local command="$1"
-    /tmp/ssh_script.exp "mbet@172.16.16.100" "$REMOTE_PASSWORD" "$SUDO_PASSWORD" "$command"
+    eval "$command"
 }
 
 echo "Installing dependencies on remote server..."
@@ -75,6 +51,10 @@ run_ssh_command "if ! command -v docker &> /dev/null; then
     sudo apt-get update &&
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 fi"
+
+# Fix key directory permissions
+run_ssh_command "mkdir -p $REMOTE_PATH/access-refresh-token-keys && chmod 777 $REMOTE_PATH/access-refresh-token-keys"
+
 
 # Install or update Docker Compose on remote server
 echo "Installing Docker Compose on remote server..."
@@ -97,8 +77,14 @@ run_ssh_command "echo '$DOCKER_PASSWORD' | sudo docker login --username greentel
 # Pull latest image
 run_ssh_command "echo '$SUDO_PASSWORD' | sudo -S docker pull greentelecom/mbet-payment-gw-engine-lb:latest"
 
-# Change directory to REMOTE_PATH and run docker-compose
+# Change directory to REMOTE_PATH and run docker-compose for elk stack
+run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-lipanasi-elk-stack.yaml up --build -d --remove-orphans"
+
+# Change directory to REMOTE_PATH and run docker-compose for payment gateway
 run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-payment-gw.yaml up --build -d --remove-orphans"
+
+## Change directory to REMOTE_PATH and run docker-compose
+#run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-payment-gw.yaml up --build -d --remove-orphans"
 
 # Clean up old images
 run_ssh_command "echo '$SUDO_PASSWORD' | sudo -S docker image prune -f"
@@ -109,7 +95,7 @@ sleep 15
 PORT=8082
 checkHealth() {
     PORT=$1
-    url="http://172.16.16.100:$PORT/actuator/health"
+    url="http://75.119.130.98:$PORT/actuator/health"
     pingCount=0
     stopIterate=0
     loopStartTime=$(date +%s)

@@ -1,0 +1,140 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: pgw-engine-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RMQ_USERNAME}"       # Define the default username lipanasielk
+      RABBITMQ_DEFAULT_PASS: "${RMQ_PASSWORD}"    # Define the default password  Lip@n#s1$983
+      RABBITMQ_DEFAULT_VHOST: /          # Optional: Define a default virtual host
+    #      RABBITMQ_CONF_ENV_FILE: /etc/rabbitmq/rabbitmq-env.conf
+    ports:
+      - '444:5672'
+      - '15672:15672'
+    volumes:
+      - /usr/local/rabbitmq-data:/var/lib/rabbitmq
+      #- ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    #    deploy:
+    #      resources:
+    #        limits:
+    #          memory: 1024M    # Hard limit at 1GB
+    #        reservations:
+    #          memory: 768M     # 768MB reservation
+    restart: always
+    networks:
+      - pgw_elk-rmq-network
+
+  rabbitmq-lipanasi:
+    image: rabbitmq:3-management-alpine
+    container_name: production-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RMQ_PROD_USERNAME}"       # Define the default username lipanasi
+      RABBITMQ_DEFAULT_PASS: "${RMQ_PROD_PASSWORD}"    # Define the default password Lip@N#s!$123
+      RABBITMQ_DEFAULT_VHOST: /          # Optional: Define a default virtual host
+    #      RABBITMQ_CONF_ENV_FILE: /etc/rabbitmq/rabbitmq-env.conf
+    ports:
+      - '445:5672'
+      - '15684:15672'
+    volumes:
+      - /usr/local/rabbitmq-prod-data:/var/lib/rabbitmq
+      #- ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    #    deploy:
+    #      resources:
+    #        limits:
+    #          memory: 1024M    # Hard limit at 1GB
+    #        reservations:
+    #          memory: 768M     # 768MB reservation
+    restart: always
+    networks:
+      - pgw_elk-rmq-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=es-docker-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false  # Changed from false to true
+      #- ELASTIC_PASSWORD=elast13    # Set default password for 'elastic' user
+      #- xpack.security.http.ssl.enabled=false  # Disable HTTPS for simplicity (enable in production)
+      - "discovery.seed_hosts=[]"  # Explicitly empty for single-node
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - /usr/local/elasticsearch-data:/usr/share/elasticsearch/data
+      #- ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - "9200:9200"
+    networks:
+      - pgw_elk-rmq-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s -f http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.12.0
+    container_name: logstash
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+    ports:
+      - "5044:5044"
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+      ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+      ELASTICSEARCH_SNIFFING: "false"
+      ELASTICSEARCH_RETRY_INITIAL_INTERVAL: "3"
+      #ELASTICSEARCH_USER: "elastic"  # New
+      #ELASTICSEARCH_PASSWORD: "elast13"  # New
+    networks:
+      - pgw_elk-rmq-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_REQUESTTIMEOUT=90000
+      - ELASTICSEARCH_STARTUPTIMEOUT=300
+      #- ELASTICSEARCH_USERNAME=elastic  # New
+      #- ELASTICSEARCH_PASSWORD=elast13  # New
+    networks:
+      - pgw_elk-rmq-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+
+networks:
+  pgw_elk-rmq-network:
+    driver: bridge
+    external: true
+    name: pgw_elk-rmq-network

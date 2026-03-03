@@ -25,7 +25,6 @@ import com.hybrid9.pg.Lipanasi.entities.order.OrderSession;
 import com.hybrid9.pg.Lipanasi.entities.payments.pymtmethods.PaymentMethod;
 import com.hybrid9.pg.Lipanasi.models.pgmodels.commissions.CommissionConfig;
 import com.hybrid9.pg.Lipanasi.models.pgmodels.mobilenetworks.OperatorMapping;
-import com.hybrid9.pg.Lipanasi.models.pgmodels.vendorx.VendorManager;
 import com.hybrid9.pg.Lipanasi.models.session.UserSession;
 import com.hybrid9.pg.Lipanasi.resources.excpts.CustomExcpts;
 import com.hybrid9.pg.Lipanasi.serviceImpl.operators.MnoServiceImpl;
@@ -41,7 +40,6 @@ import com.hybrid9.pg.Lipanasi.services.payments.gw.OperatorManagementService;
 import com.hybrid9.pg.Lipanasi.services.payments.gw.PaymentProcessingService;
 import com.hybrid9.pg.Lipanasi.services.payments.gw.SessionManagementService;
 import com.hybrid9.pg.Lipanasi.services.payments.vendorx.VendorManagementService;
-import com.hybrid9.pg.Lipanasi.services.payscoopconfig.PayScoopApiService;
 import com.hybrid9.pg.Lipanasi.services.vendorx.VendorService;
 import com.hybrid9.pg.Lipanasi.utilities.OrderNumberGenerator;
 import com.hybrid9.pg.Lipanasi.utilities.PaymentUtilities;
@@ -55,7 +53,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -76,10 +73,10 @@ public class OrderResource {
     @Qualifier("orderProcessorVirtualThread")
     private ExecutorService orderProcessorVirtualThread;
 
-    @Value("${partner.validation.url:https://api.business.payscoop.com/api/validate}")
+    @Value("${partner.validation.url:https://75.119.130.98:3032/api/validate}")
     private String partnerValidationUrl;
 
-    @Value("${network.config.url:https://api.business.payscoop.com/api/collection-credential}")
+    @Value("${network.config.url:https://75.119.130.98:3032/api/collection-credential}")
     private String networkConfigUrl;
 
     @Autowired

@@ -5,14 +5,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.hybrid9.pg.Lipanasi.dto.VendorCreatorDto;
-import com.hybrid9.pg.Lipanasi.dto.commission.PaymentChannelConfig;
 import com.hybrid9.pg.Lipanasi.dto.commission.PaymentMethodConfig;
 import com.hybrid9.pg.Lipanasi.dto.customer.CustomerDto;
 import com.hybrid9.pg.Lipanasi.dto.operator.OperatorResponseDto;
 import com.hybrid9.pg.Lipanasi.dto.order.OrderRequestDto;
 import com.hybrid9.pg.Lipanasi.dto.order.VendorInfo;
-import com.hybrid9.pg.Lipanasi.dto.payscoopconfig.MerchantCharge;
-import com.hybrid9.pg.Lipanasi.dto.payscoopconfig.MerchantChargesResponse;
+import com.hybrid9.pg.Lipanasi.dto.lipanasiconfig.MerchantCharge;
+import com.hybrid9.pg.Lipanasi.dto.lipanasiconfig.MerchantChargesResponse;
 import com.hybrid9.pg.Lipanasi.entities.operators.MnoMapping;
 import com.hybrid9.pg.Lipanasi.entities.operators.MnoPrefix;
 import com.hybrid9.pg.Lipanasi.entities.operators.MobileMoneyChannel;
@@ -40,7 +39,7 @@ import com.hybrid9.pg.Lipanasi.services.payments.PaymentMethodService;
 import com.hybrid9.pg.Lipanasi.services.payments.gw.OperatorManagementService;
 import com.hybrid9.pg.Lipanasi.services.payments.vendorx.VendorManagementService;
 import com.hybrid9.pg.Lipanasi.services.payments.vendorx.VendorNetworkChargesService;
-import com.hybrid9.pg.Lipanasi.services.payscoopconfig.PayScoopApiService;
+import com.hybrid9.pg.Lipanasi.services.lipanasiconfig.PayScoopApiService;
 import com.hybrid9.pg.Lipanasi.services.vendorx.VendorService;
 import com.hybrid9.pg.Lipanasi.utilities.PaymentUtilities;
 import lombok.extern.slf4j.Slf4j;
@@ -71,10 +70,10 @@ public class ExternalResources {
 
     private final Object commissionTierLock = new Object();
 
-    @Value("${partner.validation.url:https://api.business.payscoop.com/api/validate}")
+    @Value("${partner.validation.url:http://75.119.130.98:3032/api/validate}")
     private String partnerValidationUrl;
 
-    @Value("${network.config.url:https://api.business.payscoop.com/api/collection-credential}")
+    @Value("${network.config.url:http://75.119.130.98:3032/api/collection-credential}")
     private String networkConfigUrl;
 
     private final VendorResource vendorResource;
@@ -155,7 +154,7 @@ public class ExternalResources {
 
             log.debug("order.getPartnerId(): " + order.getPartnerId());
 
-            // Get merchant charges related configurations from PayScoop API or Redis
+            // Get merchant charges related configurations from Lipanasi API or Redis
             MerchantChargesResponse merchantChargesResponse = this.vendorNetworkChargesService
                     .getVendor(switchOperator(operatorName) + "-" + order.getPartnerId())
                     .map(vendor -> {
@@ -190,11 +189,11 @@ public class ExternalResources {
 
             // Validate the merchant charges response
             if (!merchantChargesResponse.getSuccess()) {
-                throw new RuntimeException("Failed to get merchant charges from PayScoop API");
+                throw new RuntimeException("Failed to get merchant charges from Lipanasi API");
             }
 
             if (merchantChargesResponse.getData().getFirst().getMerchantId() != Long.parseLong(partnerId)) {
-                throw new RuntimeException("Invalid merchant ID in PayScoop API response");
+                throw new RuntimeException("Invalid merchant ID in Lipanasi API response");
             }
 
             String vendorInfo = "{\n" +

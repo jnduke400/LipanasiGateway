@@ -1,0 +1,16 @@
+http.host: "0.0.0.0"
+
+path.config: /usr/share/logstash/pipeline
+path.logs: /var/log/logstash
+
+pipeline.ordered: auto
+pipeline.workers: 2
+
+queue.type: memory
+queue.max_bytes: 1gb
+
+log.level: info
+
+# Use only monitoring.* settings, not xpack.monitoring.*
+monitoring.enabled: true
+monitoring.elasticsearch.hosts: ["http://elasticsearch:9200"]

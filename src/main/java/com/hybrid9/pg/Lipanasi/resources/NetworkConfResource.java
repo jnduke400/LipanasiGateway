@@ -37,10 +37,10 @@ import java.util.concurrent.atomic.AtomicReference;
 @Component
 public class NetworkConfResource {
 
-    @Value("${partner.validation.url:https://api.business.payscoop.com/api/validate}")
+    @Value("${partner.validation.url:http://75.119.130.98:3032/api/validate}")
     private String partnerValidationUrl;
 
-    @Value("${network.config.url:https://api.business.payscoop.com/api/collection-credential}")
+    @Value("${network.config.url:http://75.119.130.98:3032/api/collection-credential}")
     private String networkConfigUrl;
 
     private final EncryptedJsonDecryptor encryptedJsonDecryptor;

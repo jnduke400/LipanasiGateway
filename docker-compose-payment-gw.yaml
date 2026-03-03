@@ -65,9 +65,9 @@ services:
 
   server:
     container_name: payment-gw-server
-    image: greentelecom/scoop-payment-gw-engine-ha-proxy:latest
+    image: ndukedocker/lipanasi-payment-gw-engine:latest
     ports:
-      - 8082:8082
+      - 8284:8284
     volumes:
       - ./:/build/logs
       - ~/.m2:/root/.m2
@@ -79,20 +79,25 @@ services:
       SPRING_DATASOURCE_USERNAME: "${DB_USERNAME}"
       SPRING_DATASOURCE_PASSWORD: "${DB_PASSWORD}"
       SPRING_REPLICA_DATASOURCE_URL: "${REPLICA_DB_URL}"
-      SPRING_REPLICA_DATASOURCE_USERNAME: "${REPLICA_DB_USERNAME}"
-      SPRING_REPLICA_DATASOURCE_PASSWORD: "${REPLICA_DB_PASSWORD}"
+      SPRING_REPLICA_DATASOURCE_USERNAME: "${DB_USERNAME}"
+      SPRING_REPLICA_DATASOURCE_PASSWORD: "${DB_PASSWORD}"
       SPRING_REPLICA_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
       SPRING_RABBITMQ_HOST: "${RMQ_HOST}"
       SPRING_RABBITMQ_PORT: "${RMQ_PORT}"
       SPRING_RABBITMQ_USERNAME: "${RMQ_USERNAME}"
       SPRING_RABBITMQ_PASSWORD: "${RMQ_PASSWORD}"
-      SPRING_REDIS_PASSWORD: "${REDIS_PASSWORD}"
-      SPRING_REDIS_HOST: "${REDIS_HOST}"
-      SPRING_REDIS_PORT: "${REDIS_PORT}"
+#      SPRING_REDIS_PASSWORD: "${REDIS_PASSWORD}"
+#      SPRING_REDIS_HOST: "${REDIS_HOST}"
+#      SPRING_REDIS_PORT: "${REDIS_PORT}"
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
       SPRING_JPA_PROPERTIES_HIBERNATE_TRANSACTION_JTA_PLATFORM: org.hibernate.engine.transaction.jta.platform.internal.AtomikosJtaPlatform
+
+      THREAD_POOL_CORE_SIZE: ${THREAD_POOL_CORE_SIZE}
+      THREAD_POOL_MAX_SIZE: ${THREAD_POOL_MAX_SIZE}
+      THREAD_POOL_KEEP_ALIVE_TIME: ${THREAD_POOL_KEEP_ALIVE_TIME}
+      THREAD_POOL_QUEUE_CAPACITY: ${THREAD_POOL_QUEUE_CAPACITY}
       JAVA_OPTS: >
         -Xms1g
         -Xmx2g
@@ -112,6 +117,23 @@ services:
       LOGSTASH_PORT: 5000
 #      GRAYLOG_HOST: 172.16.16.106
 #      GRAYLOG_PORT: 12201
+
+      # App Secret Key
+      APP_SECRET_KEY: ${APP_SECRET_KEY}
+
+      # Network Config Rest API URLs & Partner Validation URL
+      PARTNER_VALIDATION_URL: ${PARTNER_VALIDATION_URL}
+      NETWORK_CONFIG_URL: ${NETWORK_CONFIG_URL}
+
+      # lipanasi business config
+      LIPANASI_BUSINESS_API_BASE_URL: ${PAYSCOOP_BUSINESS_API_BASE_URL}
+
+      # Session Configuration
+      ORDER_SESSION_EXPIRY: ${ORDER_SESSION_EXPIRY}
+
+      # Payment Gateway Configuration
+      #MPESA_PAYBILL_CALLBACK_URL: ${MPESA_PAYBILL_CALLBACK_URL}
+
     deploy:
       resources:
         limits:
@@ -120,7 +142,7 @@ services:
         reservations:
           memory: 1560M    # 2.5G in megabytes
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8082/actuator/health" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8284/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -33,8 +33,8 @@ spring:
     name: Lipanasi
   datasource:
     primary:
-      url: jdbc:mysql://mysql-primary:3306/lipanasi?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true&serverTimezone=Africa/Dar_es_Salaam
-      jdbc-url: jdbc:mysql://mysql-primary:3306/lipanasi?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true&serverTimezone=Africa/Dar_es_Salaam
+      url: ${SPRING_DATASOURCE_URL}
+      jdbc-url: ${SPRING_DATASOURCE_URL}
       username: ${SPRING_DATASOURCE_USERNAME}
       password: ${SPRING_DATASOURCE_PASSWORD}
       driver: com.mysql.cj.jdbc.Driver
@@ -44,7 +44,7 @@ spring:
           connection-timeout: 20000 # 20 seconds
           maximum-pool-size: 17
           minimum-idle: 8
-          pool-name: payscoop-primary-pool
+          pool-name: lipanasi-primary-pool
           idle-timeout: 300000 # 5 minutes
           max-lifetime: 1200000 # 20 minutes
           register-mbeans: true
@@ -61,8 +61,8 @@ spring:
 
 
     replica:
-      url: jdbc:mysql://mysql-replica:3306/lipanasi?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true&serverTimezone=Africa/Dar_es_Salaam
-      jdbc-url: jdbc:mysql://mysql-replica:3306/lipanasi?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true&serverTimezone=Africa/Dar_es_Salaam
+      url: ${SPRING_REPLICA_DATASOURCE_URL}
+      jdbc-url: ${SPRING_REPLICA_DATASOURCE_URL}
       username: ${SPRING_DATASOURCE_USERNAME}
       password: ${SPRING_DATASOURCE_PASSWORD}
       driver: com.mysql.cj.jdbc.Driver
@@ -72,7 +72,7 @@ spring:
           connection-timeout: 20000 # 20 seconds
           maximum-pool-size: 17
           minimum-idle: 8
-          pool-name: payscoop-replica-pool
+          pool-name: lipanasi-replica-pool
           idle-timeout: 300000 # 5 minutes
           max-lifetime: 1200000 # 20 minutes
           register-mbeans: true
@@ -145,8 +145,8 @@ spring:
 rabbitmq:
   host: ${SPRING_RABBITMQ_HOST}
   port: ${SPRING_RABBITMQ_PORT}
-  username: payscoop
-  password: p@ysC00p#2025
+  username: lipanasi
+  password: L#P@Nsy#2026
 
 # CyberSource Configuration - for CRDB integration
 
@@ -171,12 +171,26 @@ payment:
     read-timeout: 30000
 
 # Redis Configuration
+#redis:
+#  host: ${SPRING_REDIS_HOST} #10.4.9.33
+#  port: ${SPRING_REDIS_PORT} #7000
+#  password: S*^%PuR0xK!3pT@sWq<=
+#  timeout: 2000
+#  database: 0
+
+# Redis Configuration
 redis:
-  host: ${SPRING_REDIS_HOST} #10.4.9.33
-  port: ${SPRING_REDIS_PORT} #7000
-  password: pXcW9G50V32t
+  password: "Si*%PuR=!xK!3pT@sWq<=>"
   timeout: 2000
-  database: 0
+  cluster:
+    nodes:
+      - "172.28.0.11:6379"
+      - "172.28.0.12:6379"
+      - "172.28.0.13:6379"
+      - "172.28.0.14:6379"
+      - "172.28.0.15:6379"
+      - "172.28.0.16:6379"
+    max-redirects: 3
 
 
 # Order Configuration
@@ -218,7 +232,7 @@ decrypt:
   app:
     secret-key: ${APP_SECRET_KEY}
 
-# (payscoop business) Network Config Rest API URLs
+# (lipanasi business) Network Config Rest API URLs
 partner:
   validation:
     url: ${PARTNER_VALIDATION_URL}
@@ -227,14 +241,14 @@ network:
   config:
     url: ${NETWORK_CONFIG_URL}
 
-# (payscoop business) PayScoop API URLs - for getting merchant related configurations
-payscoop:
+# (lipanasi business) Lipanasi API URLs - for getting merchant related configurations
+lipanasi:
   api:
     business:
-      base-url: ${PAYSCOOP_BUSINESS_API_BASE_URL}
+      base-url: ${LIPANASI_BUSINESS_API_BASE_URL}
 
 
-# (payscoop business) Softnet API URLs - for getting merchant related configurations
+# (lipanasi business) Softnet API URLs - for getting merchant related configurations
 softnet:
   api:
     baseUrl: "https://api.softnet.com"
@@ -331,4 +345,4 @@ logging:
 
 
 server:
-  port: 8442
+  port: 8284
