@@ -22,6 +22,9 @@ jobs:
       - name: Build with Maven
         run: mvn clean install -DskipTests
 
+      - name: Install sshpass
+        run: sudo apt-get install -y sshpass
+
       - name: Build & push Docker image
         uses: mr-smithers-excellent/docker-build-push@v5
         with:
@@ -67,10 +70,7 @@ jobs:
             echo "THREAD_POOL_MAX_SIZE: ${{secrets.THREAD_POOL_MAX_SIZE}}"
             echo "THREAD_POOL_QUEUE_CAPACITY: ${{secrets.THREAD_POOL_QUEUE_CAPACITY}}"
             
-          } > .env
-
-      - name: Install sshpass
-        run: sudo apt-get install -y sshpass
+          } > .env      
 
       - name: Deploy to Server
         env:
@@ -125,7 +125,8 @@ jobs:
 
           #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x deploy.sh && ./deploy.sh"
           sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x deploy.sh && export SUDO_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export REMOTE_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export DOCKER_PASSWORD='${{ secrets.DOCKER_PASSWORD }}' && export REMOTE_PATH='${{ secrets.HA_PROXY_BASE_DIRECTORY }}' && ./deploy.sh"
-          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x redis-cluster-setup-script.sh && export SUDO_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export REMOTE_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export DOCKER_PASSWORD='${{ secrets.DOCKER_PASSWORD }}' && export REMOTE_PATH='${{ secrets.HA_PROXY_BASE_DIRECTORY }}' && ./redis-cluster-setup-script.sh"
+          #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x redis-cluster-setup-script.sh && export SUDO_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export REMOTE_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && export DOCKER_PASSWORD='${{ secrets.DOCKER_PASSWORD }}' && export REMOTE_PATH='${{ secrets.HA_PROXY_BASE_DIRECTORY }}' && ./redis-cluster-setup-script.sh"
+          sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST \"cd $DEPLOY_PATH && chmod +x redis-cluster-setup-script.sh && \export REMOTE_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && \export SUDO_PASSWORD='${{ secrets.HA_PROXY_PASSWORD }}' && \export REMOTE_PATH='${{ secrets.HA_PROXY_BASE_DIRECTORY }}' && \./redis-cluster-setup-script.sh"
           
           #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && chmod +x lb2_pre_deploy.sh && ./lb2_pre_deploy.sh"
           #sshpass -e ssh -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USER@$SERVER_HOST "cd $DEPLOY_PATH && ./deploy.sh"

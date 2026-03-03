@@ -14,6 +14,11 @@ handle_error() {
     exit 1
 }
 
+echo "Ensuring sshpass is installed..."
+if ! command -v sshpass &> /dev/null; then
+    apt-get install -y sshpass || echo '$SUDO_PASSWORD' | sudo -S apt-get install -y sshpass
+fi
+
 # Function to run SSH commands
 run_ssh_command() {
     local command="$1"

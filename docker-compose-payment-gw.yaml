@@ -157,5 +157,5 @@ volumes:
 networks:
   payment-gw-network:
     driver: bridge
-    external: true
-    name: payment-gw-network  # Explicitly specify the network name
+    external: false
+    #name: payment-gw-network  # Explicitly specify the network name
