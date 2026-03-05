@@ -322,7 +322,7 @@ resilience4j:
 
 
 logstash:
-  host: ${LOGSTASH_HOST:10.4.9.34}
+  host: ${LOGSTASH_HOST:75.119.130.98}
   port: ${LOGSTASH_PORT:5000}
 
 logging:
