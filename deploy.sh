@@ -104,8 +104,10 @@ echo "$SUDO_PASSWORD" | sudo -S chown -R 999:999 /usr/local/rabbitmq-data /usr/l
 run_ssh_command "cd $REMOTE_PATH && echo "$SUDO_PASSWORD" | sudo -S docker compose -f docker-compose-lipanasi-elk-stack.yaml up -d"
 
 # Stop existing containers and free ports
-echo "Stopping existing containers..."
-run_ssh_command "cd $REMOTE_PATH && docker compose -f docker-compose-payment-gw.yaml down 2>/dev/null || true"
+#echo "Stopping existing containers..."
+#run_ssh_command "cd $REMOTE_PATH && docker compose -f docker-compose-payment-gw.yaml down 2>/dev/null || true"
+# ✅ Only restart the app server, leave MySQL untouched
+run_ssh_command "cd $REMOTE_PATH && docker compose -f docker-compose-payment-gw.yaml up -d --no-deps server"
 
 # Change directory to REMOTE_PATH and run docker-compose for payment gateway
 run_ssh_command "cd $REMOTE_PATH && echo "$SUDO_PASSWORD" | sudo -S docker compose -f docker-compose-payment-gw.yaml up -d"
