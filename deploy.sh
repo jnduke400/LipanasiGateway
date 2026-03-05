@@ -51,11 +51,11 @@ run_ssh_command() {
 
 echo "Installing dependencies on remote server..."
 # Update and install dependencies on remote server
-run_ssh_command "echo '$SUDO_PASSWORD' | sudo -S apt-get update && sudo -S apt-get upgrade -y"
+run_ssh_command "echo "$SUDO_PASSWORD" | sudo -S apt-get update && sudo -S apt-get upgrade -y"
 
 # Install Docker if not already installed
 run_ssh_command "if ! command -v docker &> /dev/null; then
-    echo '$SUDO_PASSWORD' | sudo -S apt-get install -y apt-transport-https ca-certificates curl software-properties-common &&
+    echo "$SUDO_PASSWORD" | sudo -S apt-get install -y apt-transport-https ca-certificates curl software-properties-common &&
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - &&
     sudo add-apt-repository 'deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable' &&
     sudo apt-get update &&
@@ -69,7 +69,7 @@ run_ssh_command "mkdir -p $REMOTE_PATH/access-refresh-token-keys && chmod 777 $R
 # Install or update Docker Compose on remote server
 echo "Installing Docker Compose on remote server..."
 run_ssh_command "COMPOSE_VERSION=\$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d '\"' -f 4) &&
-    echo '$SUDO_PASSWORD' | sudo -S curl -L \"https://github.com/docker/compose/releases/download/\${COMPOSE_VERSION}/docker-compose-\$(uname -s)-\$(uname -m)\" -o /usr/local/bin/docker-compose &&
+    echo "$SUDO_PASSWORD" | sudo -S curl -L \"https://github.com/docker/compose/releases/download/\${COMPOSE_VERSION}/docker-compose-\$(uname -s)-\$(uname -m)\" -o /usr/local/bin/docker-compose &&
     sudo -S chmod +x /usr/local/bin/docker-compose"
 
 # Set Logstash permissions if needed
@@ -82,10 +82,10 @@ fi"
 echo "Performing Docker operations..."
 
 # Docker login
-run_ssh_command "echo "$DOCKER_PASSWORD" | sudo docker login --username ndukedocker --password-stdin"
+run_ssh_command "echo \"$DOCKER_PASSWORD\" | sudo docker login --username ndukedocker --password-stdin"
 
 # Pull latest image
-run_ssh_command "echo '$SUDO_PASSWORD' | sudo -S docker pull ndukedocker/lipanasi-payment-gw-engine:latest"
+run_ssh_command "echo "$SUDO_PASSWORD" | sudo -S docker pull ndukedocker/lipanasi-payment-gw-engine:latest"
 
 # Required for Elasticsearch
 echo "Setting vm.max_map_count for Elasticsearch..."
@@ -101,27 +101,20 @@ echo "$SUDO_PASSWORD" | sudo -S mkdir -p /usr/local/rabbitmq-data /usr/local/rab
 echo "$SUDO_PASSWORD" | sudo -S chown -R 999:999 /usr/local/rabbitmq-data /usr/local/rabbitmq-prod-data
 
 # Change directory to REMOTE_PATH and run docker-compose for elk stack
-run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-lipanasi-elk-stack.yaml up --build -d --remove-orphans"
+run_ssh_command "cd $REMOTE_PATH && echo "$SUDO_PASSWORD" | sudo -S docker compose -f docker-compose-lipanasi-elk-stack.yaml up -d"
 
 # Stop existing containers and free ports
 echo "Stopping existing containers..."
-docker-compose -f docker-compose-payment-gw.yaml down 2>/dev/null || true
-
-# If port 3306 is still bound by something outside compose, kill it
-if lsof -i :3306 &>/dev/null; then
-    echo "Port 3306 still in use, killing process..."
-    fuser -k 3306/tcp || true
-    sleep 3
-fi
+run_ssh_command "cd $REMOTE_PATH && docker compose -f docker-compose-payment-gw.yaml down 2>/dev/null || true"
 
 # Change directory to REMOTE_PATH and run docker-compose for payment gateway
-run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-payment-gw.yaml up --build -d --remove-orphans"
+run_ssh_command "cd $REMOTE_PATH && echo "$SUDO_PASSWORD" | sudo -S docker compose -f docker-compose-payment-gw.yaml up -d"
 
 ## Change directory to REMOTE_PATH and run docker-compose
-#run_ssh_command "cd $REMOTE_PATH && echo '$SUDO_PASSWORD' | sudo -S docker-compose -f docker-compose-payment-gw.yaml up --build -d --remove-orphans"
+#run_ssh_command "cd $REMOTE_PATH && echo "$SUDO_PASSWORD" | sudo -S docker compose -f docker-compose-payment-gw.yaml up -d"
 
 # Clean up old images
-run_ssh_command "echo '$SUDO_PASSWORD' | sudo -S docker image prune -f"
+run_ssh_command "echo "$SUDO_PASSWORD" | sudo -S docker image prune -f"
 
 sleep 15
 
